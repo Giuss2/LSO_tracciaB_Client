@@ -7,4 +7,4 @@ COPY . .
 
 RUN gcc SenzaTitolo1.c -o client
 
-CMD ["./client", "server-container", "5201"]
+CMD ["./client", "server", "5201"]
