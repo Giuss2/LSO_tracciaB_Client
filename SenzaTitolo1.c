@@ -8,30 +8,21 @@
 #include <sys/select.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <stdbool.h>
+#include <stdbool.h> 
 #include "mappa.h"
 
 #define MAXLINE 4096
-typedef struct messClient{
-	char direzione;
-	bool movimento;
-}MessClient;
-typedef struct messRicevuto{
-       Mappa mappa;
-       Player p;
-}MessRicevuto;
 
 static ssize_t writen_all(int fd, const void *buf, size_t n) {
-    MessClient mess;
-
-    ssize_t off = 0;
-    while (off < sizeof(mess)) {
-        ssize_t w = send(fd, &mess, sizeof(mess) < 0, 0);
+    const char *p = (const char *)buf;
+    size_t off = 0;
+    while (off < n) {
+        ssize_t w = send(fd, p + off, n - off, 0);
         if (w < 0) {
             if (errno == EINTR) continue;
             return -1;
         }
-      off += (size_t)w;
+        off += (size_t)w;
     }
     return (ssize_t)off;
 }
@@ -42,6 +33,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+	printf("Client acceso"); fflush(stdout);
 
     // ---- resolve & connect ----
     struct addrinfo hints, *res, *rp;
@@ -60,15 +52,12 @@ int main(int argc, char **argv) {
         close(sockfd); sockfd = -1;
     }
     freeaddrinfo(res);
-    if (sockfd < 0) { perror("connect"); printf("Benvenuto nel gioco!"); return 1; }
-
-    Mappa mappa;
+    if (sockfd < 0) { perror("connect"); return 1; }
 
     // ---- multiplex loop ----
     int stdin_open = 1;                // finché non va in EOF
     fd_set rset;
-    char sendline[MAXLINE], recvline[MAXLINE], carattere;
-
+    char sendline[MAXLINE], recvline[MAXLINE];
 
     for (;;) {
         FD_ZERO(&rset);
@@ -84,28 +73,27 @@ int main(int argc, char **argv) {
         }
 
         // socket pronta: leggi risposta server
-        MessRicevuto messRicevuto;
         if (FD_ISSET(sockfd, &rset)) {
-            ssize_t n = recv(sockfd, &messRicevuto, sizeof(messRicevuto), 0);
+            ssize_t n = recv(sockfd, recvline, sizeof(recvline), 0);
             if (n < 0) { perror("recv"); break; }
             if (n == 0) {                 // server ha chiuso
                 if (stdin_open)
                     fprintf(stderr, "server terminated prematurely\n");
                 break;
             }
-            stampaMappa(messRicevuto.p, messRicevuto.mappa.mappa, messRicevuto.mappa.mappaPlayer);
+            if (write(STDOUT_FILENO, recvline, (size_t)n) < 0) { perror("write stdout"); break; }
         }
 
         // stdin pronto: leggi e invia al server
         if (stdin_open && FD_ISSET(STDIN_FILENO, &rset)) {
-            if (fgets(carattere, sizeof(char), stdin) == NULL) {
+            if (fgets(sendline, sizeof(sendline), stdin) == NULL) {
                 // EOF su stdin: niente più richieste → chiudi solo la scrittura
                 stdin_open = 0;
                 if (shutdown(sockfd, SHUT_WR) < 0) { perror("shutdown"); break; }
                 // non usciamo: continuiamo a leggere eventuale output dal server
             } else {
-                size_t len = strlen(carattere);
-                if (writen_all(sockfd, carattere, len) < 0) { perror("send"); break; }
+                size_t len = strlen(sendline);
+                if (writen_all(sockfd, sendline, len) < 0) { perror("send"); break; }
             }
         }
     }
@@ -114,7 +102,11 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-Colore getColoreCasella(Player p, int i, int j, char mappaPlayer[N][N], char mappa[N][N]) {
+Colore getColoreCasella(Player p,
+                        int i,
+                        int j,
+                        char mappaPlayer[N][N],
+                        char mappa[N][N]) {
 
     if(mappa[i][j] == ' ')
         return GRIGIO;
@@ -129,16 +121,25 @@ Colore getColoreCasella(Player p, int i, int j, char mappaPlayer[N][N], char map
         return BLACK;
 }
 
-void stampaMappa(Player p, char mappa[N][N], char mappaPlayer[N][N]) {
+void stampaMappa(Player p,
+                 char mappa[N][N],
+                 char mappaPlayer[N][N]) {
 
     for(int i = 0; i < N; i++) {
 
         for(int j = 0; j < N; j++) {
 
             Colore colore =
-                getColoreCasella(p, i, j, mappaPlayer, mappa);
+                getColoreCasella(p,
+                                 i,
+                                 j,
+                                 mappaPlayer,
+                                 mappa);
 
-            printf("%s%c %s", colori[colore], mappa[i][j], colori[0]);
+            printf("%s%c %s",
+                   colori[colore],
+                   mappa[i][j],
+                   colori[0]);
         }
 
         printf("\n");

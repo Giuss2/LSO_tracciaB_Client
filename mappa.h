@@ -53,23 +53,6 @@ typedef struct mappa {
     char mappaPlayer[N][N];
 } Mappa;
 
-const char cella_libera = 250;
-char simboli[] = {
-        cella_libera,
-        MURO,
-
-        'A','B','C','D','E','F','G','H','I','J',
-        'K','L','M','N','O','P','Q','R','S','T',
-        'U','V','W','X','Y','Z',
-
-        'a','b','c','d','e','f','g','h','i','j',
-        'k','l','m','n','o','p','q','r','s','t',
-        'u','v','w','x','y','z'
-    };
-
-
-
-
 Colore getColoreCasella(Player p, int i, int j, char mappaPlayer[N][N], char mappa[N][N]);
 
 void rivelaNebbia(Player p, char mappa[N][N], char mappaGlobale[N][N]);
