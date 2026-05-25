@@ -21,19 +21,26 @@ typedef struct messRicevuto{
        Player p;
 }MessRicevuto;
 
-static ssize_t writen_all(int fd, const void *buf, size_t n) {
-    MessClient mess;
+static ssize_t writen_all(int fd, MessClient *mess) {
 
-    ssize_t off = 0;
-    while (off < sizeof(mess)) {
-        ssize_t w = send(fd, &mess, sizeof(mess), 0);
+    size_t off = 0;
+
+    while (off < sizeof(MessClient)) {
+
+        ssize_t w = send(fd,
+                         ((char*)mess) + off,
+                         sizeof(MessClient) - off,
+                         0);
+
         if (w < 0) {
             if (errno == EINTR) continue;
             return -1;
         }
-      off += (size_t)w;
+
+        off += w;
     }
-    return (ssize_t)off;
+
+    return off;
 }
 
 int main(int argc, char **argv) {
@@ -54,20 +61,22 @@ int main(int argc, char **argv) {
 
     int sockfd = -1;
     for (rp = res; rp; rp = rp->ai_next) {
+        printf("Trying to connect to %s:%s...\n", argv[1], argv[2]);
         sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (sockfd < 0) continue;
         if (connect(sockfd, rp->ai_addr, rp->ai_addrlen) == 0) break;
         close(sockfd); sockfd = -1;
     }
     freeaddrinfo(res);
-    if (sockfd < 0) { perror("connect"); printf("Benvenuto nel gioco!"); return 1; }
+    if (sockfd < 0) { perror("connect"); return 1; }
 
     Mappa mappa;
+    printf("Benvenuto nel gioco!");  fflush(stdout);
 
     // ---- multiplex loop ----
     int stdin_open = 1;                // finché non va in EOF
     fd_set rset;
-    char sendline[MAXLINE], recvline[MAXLINE], carattere;
+    char sendline[MAXLINE], recvline[MAXLINE], carattere[32];
 
 
     for (;;) {
@@ -91,6 +100,7 @@ int main(int argc, char **argv) {
             if (n == 0) {                 // server ha chiuso
                 if (stdin_open)
                     fprintf(stderr, "server terminated prematurely\n");
+
                 break;
             }
             stampaMappa(messRicevuto.p, messRicevuto.mappa.mappa, messRicevuto.mappa.mappaPlayer);
@@ -98,14 +108,14 @@ int main(int argc, char **argv) {
 
         // stdin pronto: leggi e invia al server
         if (stdin_open && FD_ISSET(STDIN_FILENO, &rset)) {
-            if (fgets(carattere, sizeof(char), stdin) == NULL) {
+            if (fgets(carattere, sizeof(carattere), stdin) == NULL) {
                 // EOF su stdin: niente più richieste → chiudi solo la scrittura
-                stdin_open = 0;
+                //stdin_open = 0;
                 if (shutdown(sockfd, SHUT_WR) < 0) { perror("shutdown"); break; }
                 // non usciamo: continuiamo a leggere eventuale output dal server
             } else {
                 size_t len = strlen(carattere);
-                if (writen_all(sockfd, carattere, len) < 0) { perror("send"); break; }
+                if (writen_all(sockfd, carattere) < 0) { perror("send"); break; }
             }
         }
     }
