@@ -1,6 +1,6 @@
 
 #define N 20
-#define MURO (char)254
+#define MURO 'X'
 
 typedef enum {
     RESET_COLOR,

@@ -9,6 +9,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include "mappa.h"
 
 #define MAXLINE 4096
@@ -107,19 +108,38 @@ int main(int argc, char **argv) {
         }
 
         // stdin pronto: leggi e invia al server
-        if (stdin_open && FD_ISSET(STDIN_FILENO, &rset)) {
-            if (fgets(carattere, sizeof(carattere), stdin) == NULL) {
-                // EOF su stdin: niente più richieste → chiudi solo la scrittura
-                //stdin_open = 0;
-                if (shutdown(sockfd, SHUT_WR) < 0) { perror("shutdown"); break; }
-                // non usciamo: continuiamo a leggere eventuale output dal server
-            } else {
-                size_t len = strlen(carattere);
-                if (writen_all(sockfd, carattere) < 0) { perror("send"); break; }
+       if (stdin_open && FD_ISSET(STDIN_FILENO, &rset)) {
+
+        if (fgets(carattere, sizeof(carattere), stdin) == NULL) {
+
+            if (shutdown(sockfd, SHUT_WR) < 0) {
+                perror("shutdown");
+                break;
+            }
+
+        } else {
+
+            carattere[0] = toupper((unsigned char)carattere[0]);
+
+            if (carattere[0] != 'W' && carattere[0] != 'A' && carattere[0] != 'S' && carattere[0] != 'D') {
+
+                printf("Carattere non valido! Inserire A, D, W o S.\n");
+                continue;
+            }
+
+            MessClient mess;
+
+            mess.direzione = carattere[0];
+            mess.movimento = true;
+
+            if (writen_all(sockfd, &mess) < 0) {
+                perror("send");
+                break;
             }
         }
     }
-
+}
+    
     close(sockfd);
     return 0;
 }
@@ -139,18 +159,26 @@ Colore getColoreCasella(Player p, int i, int j, char mappaPlayer[N][N], char map
         return BLACK;
 }
 
-void stampaMappa(Player p, char mappa[N][N], char mappaPlayer[N][N]) {
+void stampaMappa(Player p,
+                 char mappa[N][N],
+                 char mappaPlayer[N][N]) {
+
+    printf("\033[H\033[J");
 
     for(int i = 0; i < N; i++) {
 
         for(int j = 0; j < N; j++) {
 
             Colore colore =
-                getColoreCasella(p, i, j, mappaPlayer, mappa);
+                getColoreCasella(p, i, j,
+                                 mappaPlayer,
+                                 mappa);
 
-            printf("%s%c %s", colori[colore], mappa[i][j], colori[0]);
+            printf("%s %-2c%s", colori[colore], mappa[i][j], colori[RESET_COLOR]);
         }
 
         printf("\n");
     }
+
+    fflush(stdout);
 }
