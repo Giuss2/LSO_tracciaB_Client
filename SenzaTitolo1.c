@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-	printf("Client acceso"); fflush(stdout);
+	printf("Client acceso: %s %s", argv[1], argv[2]); fflush(stdout);
 
     // ---- resolve & connect ----
     struct addrinfo hints, *res, *rp;

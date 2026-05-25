@@ -7,4 +7,4 @@ COPY . .
 
 RUN gcc SenzaTitolo1.c -o client
 
-CMD ["./client", "server", "5201"]
+CMD ["./client", "host.docker.internal", "5201"]
