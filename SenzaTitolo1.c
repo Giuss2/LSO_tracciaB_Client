@@ -73,12 +73,21 @@ int main(int argc, char **argv) {
 
     Mappa mappa;
     printf("Benvenuto nel gioco!");  fflush(stdout);
+   
+    MessClient messIniziale;
+    messIniziale.direzione = 'X'; // Carattere fittizio
+    messIniziale.movimento = false; 
+
+    if (writen_all(sockfd, &messIniziale) < 0) {
+        perror("Invio richiesta iniziale fallito");
+        close(sockfd);
+        return 1;
+    }
 
     // ---- multiplex loop ----
-    int stdin_open = 1;                // finché non va in EOF
+    int stdin_open = 1;
     fd_set rset;
-    char sendline[MAXLINE], recvline[MAXLINE], carattere[32];
-
+    char carattere[32];
 
     for (;;) {
         FD_ZERO(&rset);
@@ -93,64 +102,65 @@ int main(int argc, char **argv) {
             break;
         }
 
+        // stdin pronto: leggi e invia al server
+        if (stdin_open && FD_ISSET(STDIN_FILENO, &rset)) {
+            if (fgets(carattere, sizeof(carattere), stdin) == NULL) {
+                if (shutdown(sockfd, SHUT_WR) < 0) {
+                    perror("shutdown");
+                    break;
+                }
+                stdin_open = 0;
+            } else {
+                // Se l'utente ha premuto solo INVIO (stringa vuota o solo \n), lo ignoriamo
+                if (carattere[0] == '\n' || carattere[0] == '\0') {
+                    continue; 
+                }
+
+                carattere[0] = toupper((unsigned char)carattere[0]);
+
+                if (carattere[0] != 'W' && carattere[0] != 'A' && carattere[0] != 'S' && carattere[0] != 'D') {
+                    printf("Carattere non valido! Inserire A, D, W o S.\n");
+                    continue;
+                }
+
+                MessClient mess;
+                mess.direzione = carattere[0];
+                mess.movimento = true; // Questo è un vero movimento
+
+                if (writen_all(sockfd, &mess) < 0) {
+                    perror("send");
+                    break;
+                }
+            }
+        }
+
         // socket pronta: leggi risposta server
         MessRicevuto messRicevuto;
         if (FD_ISSET(sockfd, &rset)) {
             ssize_t n = recv(sockfd, &messRicevuto, sizeof(messRicevuto), 0);
             if (n < 0) { perror("recv"); break; }
-            if (n == 0) {                 // server ha chiuso
+            if (n == 0) { 
                 if (stdin_open)
                     fprintf(stderr, "server terminated prematurely\n");
-
                 break;
             }
-            stampaMappa(messRicevuto.p, messRicevuto.mappa.mappa, messRicevuto.mappa.mappaPlayer);
-        }
-
-        // stdin pronto: leggi e invia al server
-       if (stdin_open && FD_ISSET(STDIN_FILENO, &rset)) {
-
-        if (fgets(carattere, sizeof(carattere), stdin) == NULL) {
-
-            if (shutdown(sockfd, SHUT_WR) < 0) {
-                perror("shutdown");
-                break;
-            }
-
-        } else {
-
-            carattere[0] = toupper((unsigned char)carattere[0]);
-
-            if (carattere[0] != 'W' && carattere[0] != 'A' && carattere[0] != 'S' && carattere[0] != 'D') {
-
-                printf("Carattere non valido! Inserire A, D, W o S.\n");
-                continue;
-            }
-
-            MessClient mess;
-
-            mess.direzione = carattere[0];
-            mess.movimento = true;
-
-            if (writen_all(sockfd, &mess) < 0) {
-                perror("send");
-                break;
-            }
+            stampaMappa(&messRicevuto.p, messRicevuto.mappa.mappa, messRicevuto.mappa.mappaPlayer);
         }
     }
-}
     
     close(sockfd);
     return 0;
 }
 
-Colore getColoreCasella(Player p, int i, int j, char mappaPlayer[N][N], char mappa[N][N]) {
+Colore getColoreCasella(Player *p, int i, int j, char mappaPlayer[N][N], char mappa[N][N]) {
 
+  //  printf("DEBUG: getColoreCasella - mappa[%d][%d] = '%c', mappaPlayer[%d][%d] = '%c'\n",
+    //       i, j, mappa[i][j], i, j, mappaPlayer[i][j]);
     if(mappa[i][j] == ' ')
         return GRIGIO;
 
-    else if(mappaPlayer[i][j] == p.lettera)
-        return p.colorePlayer;
+    else if(mappaPlayer[i][j] == p->lettera)
+        return p->colorePlayer;
 
     else if(mappa[i][j] == MURO)
         return BIANCO;
@@ -159,7 +169,7 @@ Colore getColoreCasella(Player p, int i, int j, char mappaPlayer[N][N], char map
         return BLACK;
 }
 
-void stampaMappa(Player p,
+void stampaMappa(Player *p,
                  char mappa[N][N],
                  char mappaPlayer[N][N]) {
 
