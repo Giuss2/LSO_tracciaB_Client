@@ -13,6 +13,10 @@
 #include "mappa.h"
 
 #define MAXLINE 4096
+#define NUM_PLAYERS 12
+
+Player players[NUM_PLAYERS];
+
 typedef struct messClient{
 	char direzione;
 	bool movimento;
@@ -20,7 +24,10 @@ typedef struct messClient{
 typedef struct messRicevuto{
        Mappa mappa;
        Player p;
+       Player players[NUM_PLAYERS];
 }MessRicevuto;
+
+
 
 static ssize_t writen_all(int fd, MessClient *mess) {
 
@@ -50,7 +57,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-
+    
     // ---- resolve & connect ----
     struct addrinfo hints, *res, *rp;
     memset(&hints, 0, sizeof hints);
@@ -144,6 +151,10 @@ int main(int argc, char **argv) {
                     fprintf(stderr, "server terminated prematurely\n");
                 break;
             }
+            for(int k = 0; k < NUM_PLAYERS; k++) {
+                players[k] = messRicevuto.players[k];
+            }
+
             stampaMappa(&messRicevuto.p, messRicevuto.mappa.mappa, messRicevuto.mappa.mappaPlayer);
         }
     }
@@ -154,19 +165,23 @@ int main(int argc, char **argv) {
 
 Colore getColoreCasella(Player *p, int i, int j, char mappaPlayer[N][N], char mappa[N][N]) {
 
-  //  printf("DEBUG: getColoreCasella - mappa[%d][%d] = '%c', mappaPlayer[%d][%d] = '%c'\n",
-    //       i, j, mappa[i][j], i, j, mappaPlayer[i][j]);
     if(mappa[i][j] == ' ')
         return GRIGIO;
-
-    else if(mappaPlayer[i][j] == p->lettera)
-        return p->colorePlayer;
 
     else if(mappa[i][j] == MURO)
         return BIANCO;
 
-    else
+    else{
+        for(int k = 0; k < NUM_PLAYERS; k++) {
+            
+            if(mappaPlayer[i][j] == players[k].lettera)
+                return players[k].colorePlayer;
+            
+        }
+    
         return BLACK;
+    }
+        
 }
 
 void stampaMappa(Player *p,
@@ -185,10 +200,15 @@ void stampaMappa(Player *p,
                                  mappa);
 
             printf("%s %-2c%s", colori[colore], mappa[i][j], colori[RESET_COLOR]);
+            
         }
 
         printf("\n");
+
+        
     }
 
+
     fflush(stdout);
+    
 }
