@@ -17,6 +17,11 @@
 
 Player players[NUM_PLAYERS];
 
+
+typedef enum {
+    MSG_UPDATE = 0,
+    MSG_GAME_OVER = 1
+} MsgType;
 typedef struct messClient{
 	char direzione;
 	bool movimento;
@@ -25,6 +30,7 @@ typedef struct messRicevuto{
        Mappa mappa;
        Player p;
        Player players[NUM_PLAYERS];
+       MsgType type;
 }MessRicevuto;
 
 
@@ -56,6 +62,7 @@ static ssize_t readn_all(int fd, void *buf, size_t len)
     size_t off = 0;
 
     while (off < len) {
+
 
         ssize_t r = recv(
             fd,
@@ -123,8 +130,9 @@ int main(int argc, char **argv) {
     int stdin_open = 1;
     fd_set rset;
     char carattere[32];
+    int running = 1;
 
-    for (;;) {
+    while(running) {
         FD_ZERO(&rset);
         if (stdin_open) FD_SET(STDIN_FILENO, &rset);
         FD_SET(sockfd, &rset);
@@ -171,13 +179,20 @@ int main(int argc, char **argv) {
 
         // socket pronta: leggi risposta server
         MessRicevuto messRicevuto;
+       
+
         if (FD_ISSET(sockfd, &rset)) {
             ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
+             
             if (n < 0) { perror("recv"); break; }
             if (n == 0) { 
                 if (stdin_open)
                     fprintf(stderr, "server terminated prematurely\n");
                 break;
+            }
+            if (messRicevuto.type == MSG_GAME_OVER) {
+                  printf("GAME OVER\n");
+                    break;
             }
             for(int k = 0; k < NUM_PLAYERS; k++) {
                 players[k] = messRicevuto.players[k];
