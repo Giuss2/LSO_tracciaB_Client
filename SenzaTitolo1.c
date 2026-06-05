@@ -51,6 +51,35 @@ static ssize_t writen_all(int fd, MessClient *mess) {
     return off;
 }
 
+static ssize_t readn_all(int fd, void *buf, size_t len)
+{
+    size_t off = 0;
+
+    while (off < len) {
+
+        ssize_t r = recv(
+            fd,
+            ((char*)buf) + off,
+            len - off,
+            0
+        );
+
+        if (r == 0)
+            return 0;
+
+        if (r < 0) {
+            if (errno == EINTR)
+                continue;
+            return -1;
+        }
+
+        off += r;
+    }
+
+    return off;
+}
+
+
 int main(int argc, char **argv) {
     if (argc != 3) {
         fprintf(stderr, "usage: %s <host> <port>\n", argv[0]);
@@ -78,7 +107,6 @@ int main(int argc, char **argv) {
     freeaddrinfo(res);
     if (sockfd < 0) { perror("connect"); return 1; }
 
-    Mappa mappa;
     printf("Benvenuto nel gioco!");  fflush(stdout);
    
     MessClient messIniziale;
@@ -134,17 +162,17 @@ int main(int argc, char **argv) {
                 mess.direzione = carattere[0];
                 mess.movimento = true; // Questo è un vero movimento
 
-                if (writen_all(sockfd, &mess) < 0) {
-                    perror("send");
-                    break;
-                }
+    if (writen_all(sockfd, &mess) < 0) {
+        perror("send");
+        break;
+    }
             }
         }
 
         // socket pronta: leggi risposta server
         MessRicevuto messRicevuto;
         if (FD_ISSET(sockfd, &rset)) {
-            ssize_t n = recv(sockfd, &messRicevuto, sizeof(messRicevuto), 0);
+            ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
             if (n < 0) { perror("recv"); break; }
             if (n == 0) { 
                 if (stdin_open)
@@ -155,15 +183,16 @@ int main(int argc, char **argv) {
                 players[k] = messRicevuto.players[k];
             }
 
-            stampaMappa(&messRicevuto.p, messRicevuto.mappa.mappa, messRicevuto.mappa.mappaPlayer);
+            stampaMappa(messRicevuto.mappa.mappa, messRicevuto.mappa.mappaPlayer);
         }
-    }
     
+}
     close(sockfd);
     return 0;
 }
 
-Colore getColoreCasella(Player *p, int i, int j, char mappaPlayer[N][N], char mappa[N][N]) {
+
+Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char mappa[N][N]) {
 
     if(mappa[i][j] == ' ')
         return GRIGIO;
@@ -184,9 +213,7 @@ Colore getColoreCasella(Player *p, int i, int j, char mappaPlayer[N][N], char ma
         
 }
 
-void stampaMappa(Player *p,
-                 char mappa[N][N],
-                 char mappaPlayer[N][N]) {
+void stampaMappa(char mappa[N][N], char mappaPlayer[N][N]) {
 
     printf("\033[H\033[J");
 
@@ -195,7 +222,7 @@ void stampaMappa(Player *p,
         for(int j = 0; j < N; j++) {
 
             Colore colore =
-                getColoreCasella(p, i, j,
+                getColoreCasella(i, j,
                                  mappaPlayer,
                                  mappa);
 

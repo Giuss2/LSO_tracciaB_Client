@@ -53,10 +53,10 @@ typedef struct mappa {
     char mappaPlayer[N][N];
 } Mappa;
 
-Colore getColoreCasella(Player *p, int i, int j, char mappaPlayer[N][N], char mappa[N][N]);
+Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char mappa[N][N]);
 
 void rivelaNebbia(Player *p, char mappa[N][N], char mappaGlobale[N][N]);
 
 bool verificaMossa(int riga, int colonna, char mappa[N][N]);
 
-void stampaMappa(Player *p, char mappa[N][N], char mappaPlayer[N][N]);
+void stampaMappa(char mappa[N][N], char mappaPlayer[N][N]);
