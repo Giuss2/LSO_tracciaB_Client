@@ -23,7 +23,7 @@ typedef struct messClient{
 	bool movimento;
 }MessClient;
 typedef struct messRicevuto{
-       Mappa mappa;
+       Mappa mappaPlayer;
        Player p;
        Player players[NUM_PLAYERS];
        MsgType type;
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "usage: %s <host> <port>\n", argv[0]);
         return 1;
     }
-    
+
     
     // ---- resolve & connect ----
     struct addrinfo hints, *res, *rp;
@@ -127,8 +127,17 @@ int main(int argc, char **argv) {
     fd_set rset;
     char carattere[32];
     int running = 1;
+    bool globalUpdate = false;
+
+    Mappa mappaGlobale;
+    Mappa mappaLocale;
+
+    memset(&mappaGlobale, ' ', sizeof(Mappa));
+    memset(&mappaLocale, ' ', sizeof(Mappa));
+    memset(players, 0, sizeof(players));
 
     while(running) {
+
         FD_ZERO(&rset);
         if (stdin_open) FD_SET(STDIN_FILENO, &rset);
         FD_SET(sockfd, &rset);
@@ -178,6 +187,7 @@ int main(int argc, char **argv) {
         if (FD_ISSET(sockfd, &rset)) {
             MessRicevuto messRicevuto;
             ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
+
              
             if (n < 0) { perror("recv"); break; }
             if (n == 0) { 
@@ -189,11 +199,21 @@ int main(int argc, char **argv) {
                   printf("GAME OVER\n");
                     break;
             }
+            
+
             for(int k = 0; k < NUM_PLAYERS; k++) {
                 players[k] = messRicevuto.players[k];
             }
 
-            stampaMappa(messRicevuto.mappa.mappa, messRicevuto.mappa.mappaPlayer);
+            if(messRicevuto.type == MSG_UPDATE) {
+                mappaLocale = messRicevuto.mappaPlayer;
+                
+            }
+            if(messRicevuto.type == MSG_GLOBAL_UPDATE) {
+                mappaGlobale = messRicevuto.mappaPlayer;
+                globalUpdate = true;
+            }
+            stampaMappa(mappaLocale, mappaGlobale, globalUpdate);
         }
     
 }
@@ -220,19 +240,30 @@ Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char mappa[N][N]) 
     }
 }
 
-void stampaMappa(char mappa[N][N], char mappaPlayer[N][N]) {
+void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate) {
 
-    printf("\033[H\033[J");
-
+    //printf("\033[2J\033[H");
+    system("clear");
+    
     for(int i = 0; i < N; i++) {
         for(int j = 0; j < N; j++) {
-            Colore colore = getColoreCasella(i, j, mappaPlayer, mappa);
-            printf("%s %-2c%s", colori[colore], mappa[i][j], colori[RESET_COLOR]);
+            Colore colore = getColoreCasella(i, j, mappaLocale.mappaPlayer, mappaLocale.mappa);
+            printf("%s %-2c%s", colori[colore], mappaLocale.mappa[i][j], colori[RESET_COLOR]);
         }
         printf("\n");
     }
-printf("\n");
-
-
+        
+    printf("\n");
+if(globalUpdate) {
+        
+    for(int i = 0; i < N; i++) {
+        for(int j = 0; j < N; j++) {
+            Colore colore = getColoreCasella(i, j, mappaGlobale.mappaPlayer, mappaGlobale.mappa);
+               
+            printf("%s %-2c%s", colori[colore], mappaGlobale.mappa[i][j], colori[RESET_COLOR]);
+        }
+        printf("\n");
+    }
+}
     fflush(stdout);
 }

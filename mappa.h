@@ -1,5 +1,5 @@
 
-#define N 30
+#define N 20
 #define MURO 'X'
 
 typedef enum {
@@ -44,7 +44,8 @@ const char *colori[] = {
 
 typedef enum {
     MSG_UPDATE = 0,
-    MSG_GAME_OVER = 1
+    MSG_GAME_OVER = 1,
+    MSG_GLOBAL_UPDATE = 2
 } MsgType;
 
 typedef struct player {
@@ -66,4 +67,4 @@ void rivelaNebbia(Player *p, char mappa[N][N], char mappaGlobale[N][N]);
 
 bool verificaMossa(int riga, int colonna, char mappa[N][N]);
 
-void stampaMappa(char mappa[N][N], char mappaPlayer[N][N]);
+void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate);
