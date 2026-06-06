@@ -1,5 +1,5 @@
 
-#define N 20
+#define N 30
 #define MURO 'X'
 
 typedef enum {
@@ -41,11 +41,18 @@ const char *colori[] = {
     "\x1b[106m"   // CIANO CHIARO background
 };
 
+
+typedef enum {
+    MSG_UPDATE = 0,
+    MSG_GAME_OVER = 1
+} MsgType;
+
 typedef struct player {
     char lettera;
     int riga;
     int colonna;
     Colore colorePlayer;
+    int fd;
 } Player;
 
 typedef struct mappa {

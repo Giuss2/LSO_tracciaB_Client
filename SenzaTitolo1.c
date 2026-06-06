@@ -18,10 +18,6 @@
 Player players[NUM_PLAYERS];
 
 
-typedef enum {
-    MSG_UPDATE = 0,
-    MSG_GAME_OVER = 1
-} MsgType;
 typedef struct messClient{
 	char direzione;
 	bool movimento;
@@ -92,7 +88,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "usage: %s <host> <port>\n", argv[0]);
         return 1;
     }
-
+    
     
     // ---- resolve & connect ----
     struct addrinfo hints, *res, *rp;
@@ -178,10 +174,9 @@ int main(int argc, char **argv) {
         }
 
         // socket pronta: leggi risposta server
-        MessRicevuto messRicevuto;
-       
 
         if (FD_ISSET(sockfd, &rset)) {
+            MessRicevuto messRicevuto;
             ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
              
             if (n < 0) { perror("recv"); break; }
@@ -217,15 +212,12 @@ Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char mappa[N][N]) 
 
     else{
         for(int k = 0; k < NUM_PLAYERS; k++) {
-            
             if(mappaPlayer[i][j] == players[k].lettera)
-                return players[k].colorePlayer;
-            
+                return players[k].colorePlayer; 
         }
     
         return BLACK;
     }
-        
 }
 
 void stampaMappa(char mappa[N][N], char mappaPlayer[N][N]) {
@@ -233,24 +225,14 @@ void stampaMappa(char mappa[N][N], char mappaPlayer[N][N]) {
     printf("\033[H\033[J");
 
     for(int i = 0; i < N; i++) {
-
         for(int j = 0; j < N; j++) {
-
-            Colore colore =
-                getColoreCasella(i, j,
-                                 mappaPlayer,
-                                 mappa);
-
+            Colore colore = getColoreCasella(i, j, mappaPlayer, mappa);
             printf("%s %-2c%s", colori[colore], mappa[i][j], colori[RESET_COLOR]);
-            
         }
-
         printf("\n");
-
-        
     }
+printf("\n");
 
 
     fflush(stdout);
-    
 }
