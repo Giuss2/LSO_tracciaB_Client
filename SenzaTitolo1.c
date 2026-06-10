@@ -248,6 +248,26 @@ void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Stati
     //printf("\033[2J\033[H");
     system("clear");
     
+    if(globalUpdate) {
+        
+        for(int i = 0; i < N; i++) {
+            for(int j = 0; j < N; j++) {
+                Colore colore = getColoreCasella(i, j, mappaGlobale.mappaPlayer, mappaGlobale.mappa);
+               
+                printf("%s %-2c%s", colori[colore], mappaGlobale.mappa[i][j], colori[RESET_COLOR]);
+            }
+            printf("\n");
+        }
+
+        printf("\nStatistiche:\n");
+        for(int k = 0; k < NUM_PLAYERS; k++) {
+            if(players[k].lettera != '\0') {
+                printf("Giocatore %c: %d celle conquistate\n", players[k].lettera, statistics[k].celleConquistate);
+            }
+        }
+   }
+    
+   printf("\n");
     for(int i = 0; i < N; i++) {
         for(int j = 0; j < N; j++) {
             Colore colore = getColoreCasella(i, j, mappaLocale.mappaPlayer, mappaLocale.mappa);
@@ -256,24 +276,5 @@ void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Stati
         printf("\n");
     }
         
-    printf("\n");
-if(globalUpdate) {
-        
-    for(int i = 0; i < N; i++) {
-        for(int j = 0; j < N; j++) {
-            Colore colore = getColoreCasella(i, j, mappaGlobale.mappaPlayer, mappaGlobale.mappa);
-               
-            printf("%s %-2c%s", colori[colore], mappaGlobale.mappa[i][j], colori[RESET_COLOR]);
-        }
-        printf("\n");
-    }
-
-    printf("\nStatistiche:\n");
-    for(int k = 0; k < NUM_PLAYERS; k++) {
-        if(players[k].lettera != '\0') {
-            printf("Giocatore %c: %d celle conquistate\n", players[k].lettera, statistics[k].celleConquistate);
-        }
-    }
-}
     fflush(stdout);
 }
