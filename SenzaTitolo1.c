@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
 
             if (n < 0) { perror("recv"); break; }
             if (n == 0) { break; }
-            if (messRicevuto.type == MSG_GAME_OVER) { printf("GAME OVER\n"); break; }
+            if (messRicevuto.type == MSG_GAME_OVER) { printf("VINCITORE: %c\n", messRicevuto.p.lettera); break; }
 
             for(int k = 0; k < NUM_PLAYERS; k++) {
                 players[k] = messRicevuto.players[k];
