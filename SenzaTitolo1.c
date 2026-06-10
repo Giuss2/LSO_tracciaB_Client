@@ -181,24 +181,15 @@ int main(int argc, char **argv) {
             }
         }
 
-        // socket pronta: leggi risposta server
+        
 
         if (FD_ISSET(sockfd, &rset)) {
             MessRicevuto messRicevuto;
             ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
 
-             
             if (n < 0) { perror("recv"); break; }
-            if (n == 0) { 
-                if (stdin_open)
-                    fprintf(stderr, "server terminated prematurely\n");
-                break;
-            }
-            if (messRicevuto.type == MSG_GAME_OVER) {
-                  printf("GAME OVER\n");
-                    break;
-            }
-            
+            if (n == 0) { break; }
+            if (messRicevuto.type == MSG_GAME_OVER) { printf("GAME OVER\n"); break; }
 
             for(int k = 0; k < NUM_PLAYERS; k++) {
                 players[k] = messRicevuto.players[k];
@@ -206,16 +197,17 @@ int main(int argc, char **argv) {
 
             if(messRicevuto.type == MSG_UPDATE) {
                 mappaLocale = messRicevuto.mappaPlayer;
-                
             }
+    
             if(messRicevuto.type == MSG_GLOBAL_UPDATE) {
                 mappaGlobale = messRicevuto.mappaPlayer;
-                globalUpdate = true;
+                globalUpdate = true; // Diventa true SOLO se è un update globale
 
-                for(int k = 0; k < NUM_PLAYERS; k++) {
+               for(int k = 0; k < NUM_PLAYERS; k++) {
                     ultimeStatistiche[k] = messRicevuto.statistics[k];
                 }
             }
+    
             stampaMappa(mappaLocale, mappaGlobale, globalUpdate, ultimeStatistiche);
         }
     
