@@ -13,7 +13,7 @@
 #include "mappa.h"
 
 #define MAXLINE 4096
-#define NUM_PLAYERS 12
+
 
 Player players[NUM_PLAYERS];
 
@@ -27,6 +27,8 @@ typedef struct messRicevuto{
        Player p;
        Player players[NUM_PLAYERS];
        MsgType type;
+       Statistiche statistics[NUM_PLAYERS];
+
 }MessRicevuto;
 
 
@@ -60,12 +62,7 @@ static ssize_t readn_all(int fd, void *buf, size_t len)
     while (off < len) {
 
 
-        ssize_t r = recv(
-            fd,
-            ((char*)buf) + off,
-            len - off,
-            0
-        );
+        ssize_t r = recv(fd, ((char*)buf) + off, len - off, 0);
 
         if (r == 0)
             return 0;
@@ -115,6 +112,7 @@ int main(int argc, char **argv) {
     MessClient messIniziale;
     messIniziale.direzione = 'X'; // Carattere fittizio
     messIniziale.movimento = false; 
+    Statistiche ultimeStatistiche[NUM_PLAYERS]; 
 
     if (writen_all(sockfd, &messIniziale) < 0) {
         perror("Invio richiesta iniziale fallito");
@@ -134,6 +132,7 @@ int main(int argc, char **argv) {
 
     memset(&mappaGlobale, ' ', sizeof(Mappa));
     memset(&mappaLocale, ' ', sizeof(Mappa));
+    memset(ultimeStatistiche, 0, sizeof(ultimeStatistiche));
     memset(players, 0, sizeof(players));
 
     while(running) {
@@ -212,8 +211,12 @@ int main(int argc, char **argv) {
             if(messRicevuto.type == MSG_GLOBAL_UPDATE) {
                 mappaGlobale = messRicevuto.mappaPlayer;
                 globalUpdate = true;
+
+                for(int k = 0; k < NUM_PLAYERS; k++) {
+                    ultimeStatistiche[k] = messRicevuto.statistics[k];
+                }
             }
-            stampaMappa(mappaLocale, mappaGlobale, globalUpdate);
+            stampaMappa(mappaLocale, mappaGlobale, globalUpdate, ultimeStatistiche);
         }
     
 }
@@ -240,7 +243,7 @@ Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char mappa[N][N]) 
     }
 }
 
-void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate) {
+void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Statistiche statistics[NUM_PLAYERS]) {
 
     //printf("\033[2J\033[H");
     system("clear");
@@ -263,6 +266,13 @@ if(globalUpdate) {
             printf("%s %-2c%s", colori[colore], mappaGlobale.mappa[i][j], colori[RESET_COLOR]);
         }
         printf("\n");
+    }
+
+    printf("\nStatistiche:\n");
+    for(int k = 0; k < NUM_PLAYERS; k++) {
+        if(players[k].lettera != '\0') {
+            printf("Giocatore %c: %d celle conquistate\n", players[k].lettera, statistics[k].celleConquistate);
+        }
     }
 }
     fflush(stdout);
