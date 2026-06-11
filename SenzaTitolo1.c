@@ -13,8 +13,6 @@
 #include "mappa.h"
 
 #define MAXLINE 4096
-
-
 Player players[NUM_PLAYERS];
 
 
@@ -39,10 +37,7 @@ static ssize_t writen_all(int fd, MessClient *mess) {
 
     while (off < sizeof(MessClient)) {
 
-        ssize_t w = send(fd,
-                         ((char*)mess) + off,
-                         sizeof(MessClient) - off,
-                         0);
+        ssize_t w = send(fd, ((char*)mess) + off, sizeof(MessClient) - off, 0);
 
         if (w < 0) {
             if (errno == EINTR) continue;
@@ -55,12 +50,10 @@ static ssize_t writen_all(int fd, MessClient *mess) {
     return off;
 }
 
-static ssize_t readn_all(int fd, void *buf, size_t len)
-{
+static ssize_t readn_all(int fd, void *buf, size_t len){
     size_t off = 0;
 
     while (off < len) {
-
 
         ssize_t r = recv(fd, ((char*)buf) + off, len - off, 0);
 
@@ -72,7 +65,6 @@ static ssize_t readn_all(int fd, void *buf, size_t len)
                 continue;
             return -1;
         }
-
         off += r;
     }
 
