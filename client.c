@@ -19,6 +19,9 @@ Player players[NUM_PLAYERS];
 typedef struct messClient{
 	char direzione;
 	bool movimento;
+    char username[32];
+    char password[32];
+    MsgType type;
 }MessClient;
 typedef struct messRicevuto{
        Mappa mappaPlayer;
@@ -99,11 +102,21 @@ int main(int argc, char **argv) {
     freeaddrinfo(res);
     if (sockfd < 0) { perror("connect"); return 1; }
 
-    printf("Benvenuto nel gioco!");  fflush(stdout);
+    printf("Benvenuto nel gioco! \n");  fflush(stdout);
    
     MessClient messIniziale;
-    messIniziale.direzione = 'X'; // Carattere fittizio
+    //messIniziale.direzione = 'X'; // Carattere fittizio
+    
     messIniziale.movimento = false; 
+    messIniziale.type = MSG_LOGIN;
+    printf("Inserisci username: ");
+    fgets(messIniziale.username, sizeof(messIniziale.username), stdin);
+    messIniziale.username[strcspn(messIniziale.username, "\n")] = '\0';
+    printf("Inserisci password: ");
+    fgets(messIniziale.password, sizeof(messIniziale.password), stdin);
+    messIniziale.password[strcspn(messIniziale.password, "\n")] = '\0';
+
+
     Statistiche ultimeStatistiche[NUM_PLAYERS]; 
 
     if (writen_all(sockfd, &messIniziale) < 0) {
@@ -183,10 +196,11 @@ int main(int argc, char **argv) {
             if (n == 0) { break; }
             if (messRicevuto.type == MSG_GAME_OVER) { 
                 system("clear"); 
-                printf("VINCITORE: %c\n", messRicevuto.p.lettera); 
+                printf("VINCITORE: %s\n", messRicevuto.p.username); 
                 break; 
             }
 
+            memset(players, 0, sizeof(players));
             for(int k = 0; k < NUM_PLAYERS; k++) {
                 players[k] = messRicevuto.players[k];
             }
@@ -222,11 +236,12 @@ Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char mappa[N][N]) 
         return BIANCO;
 
     else{
-        for(int k = 0; k < NUM_PLAYERS; k++) {
-            if(mappaPlayer[i][j] == players[k].lettera)
-                return players[k].colorePlayer; 
+        if (mappaPlayer[i][j] != ' ' && mappaPlayer[i][j] != '\0'){
+            for(int k = 0; k < NUM_PLAYERS; k++) {
+                if(mappaPlayer[i][j] == players[k].lettera)
+                    return players[k].colorePlayer; 
+            }
         }
-    
         return BLACK;
     }
 }
@@ -249,8 +264,8 @@ void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Stati
 
         printf("\nStatistiche:\n");
         for(int k = 0; k < NUM_PLAYERS; k++) {
-            if(players[k].lettera != '\0') {
-                printf("Giocatore %c: %d celle conquistate\n", players[k].lettera, statistics[k].celleConquistate);
+            if(players[k].username[0] != '\0') {
+                printf("Giocatore %s: %d celle conquistate\n", players[k].username, statistics[k].celleConquistate);
             }
         }
    }
@@ -259,6 +274,7 @@ void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Stati
     for(int i = 0; i < N; i++) {
         for(int j = 0; j < N; j++) {
             Colore colore = getColoreCasella(i, j, mappaLocale.mappaPlayer, mappaLocale.mappa);
+            
             printf("%s %-2c%s", colori[colore], mappaLocale.mappa[i][j], colori[RESET_COLOR]);
         }
         printf("\n");

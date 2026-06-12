@@ -46,7 +46,8 @@ const char *colori[] = {
 typedef enum {
     MSG_UPDATE = 0,
     MSG_GAME_OVER = 1,
-    MSG_GLOBAL_UPDATE = 2
+    MSG_GLOBAL_UPDATE = 2,
+    MSG_LOGIN = 3
 } MsgType;
 
 typedef struct player {
@@ -54,6 +55,8 @@ typedef struct player {
     int riga;
     int colonna;
     Colore colorePlayer;
+    char username[32];
+    char password[32];
     int fd;
 } Player;
 
@@ -65,6 +68,7 @@ typedef struct mappa {
 
 typedef struct statistiche {
     char id;
+    char username[32];
     int celleConquistate;
 } Statistiche;
 
