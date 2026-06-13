@@ -47,7 +47,8 @@ typedef enum {
     MSG_UPDATE = 0,
     MSG_GAME_OVER = 1,
     MSG_GLOBAL_UPDATE = 2,
-    MSG_LOGIN = 3
+    MSG_SUBSCRIBE = 3,
+    MSG_LOGIN = 4
 } MsgType;
 
 typedef struct player {

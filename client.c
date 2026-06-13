@@ -103,12 +103,30 @@ int main(int argc, char **argv) {
     if (sockfd < 0) { perror("connect"); return 1; }
 
     printf("Benvenuto nel gioco! \n");  fflush(stdout);
-   
+
+    char scelta[32];
+
+    do {
+        printf("Premi R per registrarti oppure L per fare il login: ");
+        fflush(stdout);
+
+        if (fgets(scelta, sizeof(scelta), stdin) == NULL) {
+            continue; 
+        }
+
+        scelta[0] = toupper((unsigned char)scelta[0]);
+
+    } while(scelta[0] != 'L' && scelta[0] != 'R');
+
     MessClient messIniziale;
-    //messIniziale.direzione = 'X'; // Carattere fittizio
+    if(scelta[0] == 'R')
+        messIniziale.type = MSG_SUBSCRIBE;
+    else
+        messIniziale.type = MSG_LOGIN;
+   
     
     messIniziale.movimento = false; 
-    messIniziale.type = MSG_LOGIN;
+    
     printf("Inserisci username: ");
     fgets(messIniziale.username, sizeof(messIniziale.username), stdin);
     messIniziale.username[strcspn(messIniziale.username, "\n")] = '\0';
@@ -170,19 +188,19 @@ int main(int argc, char **argv) {
 
                 carattere[0] = toupper((unsigned char)carattere[0]);
 
-                if (carattere[0] != 'W' && carattere[0] != 'A' && carattere[0] != 'S' && carattere[0] != 'D') {
-                    printf("Carattere non valido! Inserire A, D, W o S.\n");
+                if (carattere[0] != 'W' && carattere[0] != 'A' && carattere[0] != 'S' && carattere[0] != 'D' && carattere[0] != 'U') {
+                    printf("Carattere non valido! Inserire A, D, W o S. Premere U se si desidera Uscire dal gioco.");
                     continue;
                 }
 
                 MessClient mess;
                 mess.direzione = carattere[0];
-                mess.movimento = true; // Questo è un vero movimento
+                mess.movimento = true; 
 
-    if (writen_all(sockfd, &mess) < 0) {
-        perror("send");
-        break;
-    }
+                if (writen_all(sockfd, &mess) < 0) {
+                    perror("send");
+                    break;
+                }
             }
         }
 
@@ -194,6 +212,12 @@ int main(int argc, char **argv) {
 
             if (n < 0) { perror("recv"); break; }
             if (n == 0) { break; }
+            if(messRicevuto.type == MSG_SUBSCRIBE && (strcmp(messRicevuto.p.username, "FAIL") == 0)){
+                printf("Registrazione fallita: username gia' in uso. ");
+            }
+            if(messRicevuto.type == MSG_LOGIN && (strcmp(messRicevuto.p.username, "FAIL") == 0)){
+                printf("Login fallito: credenziali errate. ");
+            }
             if (messRicevuto.type == MSG_GAME_OVER) { 
                 system("clear"); 
                 if (messRicevuto.p.username[0] == '\0' || strcmp(messRicevuto.p.username, "") == 0) {
