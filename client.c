@@ -196,8 +196,13 @@ int main(int argc, char **argv) {
             if (n == 0) { break; }
             if (messRicevuto.type == MSG_GAME_OVER) { 
                 system("clear"); 
-                printf("VINCITORE: %s\n", messRicevuto.p.username); 
-                break; 
+                if (messRicevuto.p.username[0] == '\0' || strcmp(messRicevuto.p.username, "") == 0) {
+                    printf("PARTITA TERMINATA: Nessuno collegato\n"); 
+                } else {
+                    printf("VINCITORE: %s\n", messRicevuto.p.username); 
+                }
+                break;
+                
             }
 
             memset(players, 0, sizeof(players));
