@@ -158,6 +158,14 @@ int main(int argc, char **argv) {
                 close(sockfd); 
                 _exit(1); 
             }
+
+            if (messRicevuto.type == MSG_GAME_OVER) {
+                system("clear");
+                printf("PARTITA TERMINATA MENTRE TI AUTENTICAVI! Vincitore: %s\n", messRicevuto.p.username); 
+                close(sockfd);
+                return 0; 
+            }
+            
         }while(messRicevuto.type == MSG_GLOBAL_UPDATE);
 
         // Controllo l'esito della risposta del server
@@ -191,22 +199,6 @@ int main(int argc, char **argv) {
     memset(&mappaLocale, ' ', sizeof(Mappa));
     memset(ultimeStatistiche, 0, sizeof(ultimeStatistiche));
     memset(players, 0, sizeof(players));
-
-    
-    ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
-
-    
-
-    if (n < 0) { perror("recv"); close(sockfd); _exit(1); }
-    if (n == 0) { perror("recv"); close(sockfd); _exit(1); }
-    if((messRicevuto.type == MSG_SUBSCRIBE || messRicevuto.type == MSG_LOGIN) && (strcmp(messRicevuto.p.username, "FAIL") != 0)){
-         running = 1;
-    }
-    if(messRicevuto.type == MSG_SUBSCRIBE && (strcmp(messRicevuto.p.username, "FAIL") == 0)){
-        printf("Registrazione fallita. ");
-    }else if(messRicevuto.type == MSG_LOGIN && (strcmp(messRicevuto.p.username, "FAIL") == 0)){
-        printf("Credenziali errate. ");
-    }
 
     while(running) {
 
