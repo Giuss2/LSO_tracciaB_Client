@@ -103,51 +103,99 @@ int main(int argc, char **argv) {
     if (sockfd < 0) { perror("connect"); return 1; }
 
     printf("Benvenuto nel gioco! \n");  fflush(stdout);
+    MessClient messIniziale;
+    MessRicevuto messRicevuto;
+    bool autenticato = false;
+    int running = 0;
 
-    char scelta[32];
+    while (!autenticato) {
+        char scelta[32];
 
-    do {
-        printf("Premi R per registrarti oppure L per fare il login: ");
-        fflush(stdout);
+        do {
+            printf("Premi R per registrarti oppure L per fare il login: ");
+            fflush(stdout);
 
-        if (fgets(scelta, sizeof(scelta), stdin) == NULL) {
-            continue; 
+            if (fgets(scelta, sizeof(scelta), stdin) == NULL) {
+                close(sockfd);
+                return 1; 
+            }
+
+            scelta[0] = toupper((unsigned char)scelta[0]);
+
+        } while(scelta[0] != 'L' && scelta[0] != 'R');
+
+        memset(&messIniziale, 0, sizeof(messIniziale));
+        if(scelta[0] == 'R')
+            messIniziale.type = MSG_SUBSCRIBE;
+        else
+            messIniziale.type = MSG_LOGIN;
+       
+        messIniziale.movimento = false; 
+        
+        printf("Inserisci username: ");
+        fgets(messIniziale.username, sizeof(messIniziale.username), stdin);
+        messIniziale.username[strcspn(messIniziale.username, "\n")] = '\0';
+        
+        printf("Inserisci password: ");
+        fgets(messIniziale.password, sizeof(messIniziale.password), stdin);
+        messIniziale.password[strcspn(messIniziale.password, "\n")] = '\0';
+
+printf("INVIATO: type=%d movimento=%d user='%s'\n",
+       messIniziale.type,
+       messIniziale.movimento,
+       messIniziale.username);
+fflush(stdout);
+
+
+        // Invia la richiesta al server
+        if (writen_all(sockfd, &messIniziale) < 0) {
+            perror("Invio richiesta iniziale fallito");
+            close(sockfd);
+            return 1;
         }
 
-        scelta[0] = toupper((unsigned char)scelta[0]);
+        // Aspetta la risposta dal server
+        do{
+        memset(&messRicevuto, 0, sizeof(messRicevuto));
+        
+        ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
 
-    } while(scelta[0] != 'L' && scelta[0] != 'R');
+        if (n <= 0) { 
+            fprintf(stderr, "Connessione persa o chiusa dal server.\n"); 
+            close(sockfd); 
+            _exit(1); 
+        }
+        }while(messRicevuto.type == MSG_GLOBAL_UPDATE);
+       
 
-    MessClient messIniziale;
-    if(scelta[0] == 'R')
-        messIniziale.type = MSG_SUBSCRIBE;
-    else
-        messIniziale.type = MSG_LOGIN;
-   
-    
-    messIniziale.movimento = false; 
-    
-    printf("Inserisci username: ");
-    fgets(messIniziale.username, sizeof(messIniziale.username), stdin);
-    messIniziale.username[strcspn(messIniziale.username, "\n")] = '\0';
-    printf("Inserisci password: ");
-    fgets(messIniziale.password, sizeof(messIniziale.password), stdin);
-    messIniziale.password[strcspn(messIniziale.password, "\n")] = '\0';
+printf("RICEVUTO type=%d  user='%s'\n",
+       messRicevuto.type,
+       messRicevuto.p.username);
+fflush(stdout);
 
+
+        // Controllo l'esito della risposta del server
+        if((messRicevuto.type == MSG_SUBSCRIBE || messRicevuto.type == MSG_LOGIN) && (strcmp(messRicevuto.p.username, "FAIL") != 0)){
+            printf("Autenticazione completata con successo! Entro in gioco...\n");
+            running = 1;
+            autenticato = true; // Usciamo dal loop di login ed entriamo nel gioco
+        } else {
+            if(messRicevuto.type == MSG_SUBSCRIBE){
+                printf("\n[ERRORE] Registrazione fallita: lo username esiste gia'. Riprova.\n\n");
+            } else if(messRicevuto.type == MSG_LOGIN){
+                printf("\n[ERRORE] Login fallito: credenziali errate. Riprova.\n\n");
+            }
+        }
+    }
 
     Statistiche ultimeStatistiche[NUM_PLAYERS]; 
 
-    if (writen_all(sockfd, &messIniziale) < 0) {
-        perror("Invio richiesta iniziale fallito");
-        close(sockfd);
-        return 1;
-    }
 
     // ---- multiplex loop ----
     int stdin_open = 1;
     fd_set rset;
     char carattere[32];
-    int running = 1;
+    
     bool globalUpdate = false;
 
     Mappa mappaGlobale;
@@ -157,6 +205,22 @@ int main(int argc, char **argv) {
     memset(&mappaLocale, ' ', sizeof(Mappa));
     memset(ultimeStatistiche, 0, sizeof(ultimeStatistiche));
     memset(players, 0, sizeof(players));
+
+    
+    ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
+
+    
+
+    if (n < 0) { perror("recv"); close(sockfd); _exit(1); }
+    if (n == 0) { perror("recv"); close(sockfd); _exit(1); }
+    if((messRicevuto.type == MSG_SUBSCRIBE || messRicevuto.type == MSG_LOGIN) && (strcmp(messRicevuto.p.username, "FAIL") != 0)){
+         running = 1;
+    }
+    if(messRicevuto.type == MSG_SUBSCRIBE && (strcmp(messRicevuto.p.username, "FAIL") == 0)){
+        printf("Registrazione fallita. ");
+    }else if(messRicevuto.type == MSG_LOGIN && (strcmp(messRicevuto.p.username, "FAIL") == 0)){
+        printf("Credenziali errate. ");
+    }
 
     while(running) {
 
@@ -194,6 +258,7 @@ int main(int argc, char **argv) {
                 }
 
                 MessClient mess;
+                memset(&mess, 0, sizeof(mess));
                 mess.direzione = carattere[0];
                 mess.movimento = true; 
 
