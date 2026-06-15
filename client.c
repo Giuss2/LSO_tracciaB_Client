@@ -140,39 +140,25 @@ int main(int argc, char **argv) {
         fgets(messIniziale.password, sizeof(messIniziale.password), stdin);
         messIniziale.password[strcspn(messIniziale.password, "\n")] = '\0';
 
-printf("INVIATO: type=%d movimento=%d user='%s'\n",
-       messIniziale.type,
-       messIniziale.movimento,
-       messIniziale.username);
-fflush(stdout);
-
-
-        // Invia la richiesta al server
+        
         if (writen_all(sockfd, &messIniziale) < 0) {
             perror("Invio richiesta iniziale fallito");
             close(sockfd);
             return 1;
         }
 
-        // Aspetta la risposta dal server
+        // Aspetta la risposta giusta dal server
         do{
-        memset(&messRicevuto, 0, sizeof(messRicevuto));
+            memset(&messRicevuto, 0, sizeof(messRicevuto));
         
-        ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
+            ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
 
-        if (n <= 0) { 
-            fprintf(stderr, "Connessione persa o chiusa dal server.\n"); 
-            close(sockfd); 
-            _exit(1); 
-        }
+            if (n <= 0) { 
+                fprintf(stderr, "Connessione persa o chiusa dal server.\n"); 
+                close(sockfd); 
+                _exit(1); 
+            }
         }while(messRicevuto.type == MSG_GLOBAL_UPDATE);
-       
-
-printf("RICEVUTO type=%d  user='%s'\n",
-       messRicevuto.type,
-       messRicevuto.p.username);
-fflush(stdout);
-
 
         // Controllo l'esito della risposta del server
         if((messRicevuto.type == MSG_SUBSCRIBE || messRicevuto.type == MSG_LOGIN) && (strcmp(messRicevuto.p.username, "FAIL") != 0)){
