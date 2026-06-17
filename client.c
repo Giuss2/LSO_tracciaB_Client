@@ -253,8 +253,7 @@ int main(int argc, char **argv) {
             MessRicevuto messRicevuto;
             ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
 
-            if (n < 0) { perror("recv"); break; }
-            if (n == 0) { break; }
+            if (n <= 0) { perror("Connessione persa o chiusa dal server"); break; }
             if(messRicevuto.type == MSG_SUBSCRIBE && (strcmp(messRicevuto.p.username, "FAIL") == 0)){
                 printf("Registrazione fallita: username gia' in uso. ");
             }
