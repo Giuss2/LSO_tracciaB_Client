@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
             if (n <= 0) { 
                 fprintf(stderr, "Connessione persa o chiusa dal server.\n"); 
                 close(sockfd); 
-                _exit(1); 
+                exit(1); 
             }
 
             if (messRicevuto.type == MSG_GAME_OVER) {
