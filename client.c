@@ -253,12 +253,12 @@ int main(int argc, char **argv) {
             MessRicevuto messRicevuto;
             ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
 
-            if (n <= 0) { perror("Connessione persa o chiusa dal server"); break; }
+            if (n <= 0) { perror("Connessione persa o chiusa dal server "); break; }
             if(messRicevuto.type == MSG_SUBSCRIBE && (strcmp(messRicevuto.p.username, "FAIL") == 0)){
                 printf("Registrazione fallita: username gia' in uso. ");
             }
             if(messRicevuto.type == MSG_LOGIN && (strcmp(messRicevuto.p.username, "FAIL") == 0)){
-                printf("Login fallito: credenziali errate. ");
+                printf("Login fallito: credenziali errate oppure sei gia' loggato con questo account. ");
             }
             if (messRicevuto.type == MSG_GAME_OVER) { 
                 system("clear"); 
