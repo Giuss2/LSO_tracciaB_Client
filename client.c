@@ -190,6 +190,7 @@ int main(int argc, char **argv) {
     int stdin_open = 1;
     fd_set rset;
     char carattere[32];
+    bool uscita_volontaria = false;
     
     bool globalUpdate = false;
 
@@ -241,6 +242,8 @@ int main(int argc, char **argv) {
 
                 carattere[0] = toupper((unsigned char)carattere[0]);
 
+                if(carattere[0] == 'U') uscita_volontaria = true;
+
                 if (carattere[0] != 'W' && carattere[0] != 'A' && carattere[0] != 'S' && carattere[0] != 'D' && carattere[0] != 'U') {
                     printf("Carattere non valido! Inserire A, D, W o S. Premere U se si desidera Uscire dal gioco.");
                     continue;
@@ -253,6 +256,11 @@ int main(int argc, char **argv) {
 
                 if (writen_all(sockfd, &mess) < 0) {
                     perror("send");
+                    break;
+                }
+
+                if(uscita_volontaria){
+                    running = 0;
                     break;
                 }
             }
