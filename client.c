@@ -267,14 +267,26 @@ int main(int argc, char **argv) {
 
             if (n <= 0) { perror("Connessione persa o chiusa dal server "); break; }
 
+            //evita che il client stesse processando ancora gli altri dati su socket tcp
+            if (messRicevuto.type == MSG_GAME_OVER) {
+                system("clear");
+                printf("\n=========================================\n");
+                printf("           PARTITA TERMINATA             \n");
+                printf("=========================================\n");
+                printf(" Il vincitore è: %s\n", messRicevuto.p.username);
+                printf("=========================================\n\n");
+        
+                break;
+            
+            }
 
-
-            memset(players, 0, sizeof(players));
-            for(int k = 0; k < NUM_PLAYERS; k++)
-                players[k] = messRicevuto.players[k];
-
-            if(messRicevuto.type == MSG_UPDATE)
+            if(messRicevuto.type == MSG_UPDATE){
                 mappaLocale = messRicevuto.mappaPlayer;
+                
+                for(int k = 0; k < NUM_PLAYERS; k++) {
+                    players[k] = messRicevuto.players[k];
+                }
+            }
     
             if(messRicevuto.type == MSG_GLOBAL_UPDATE) {
                 mappaGlobale = messRicevuto.mappaPlayer;
@@ -282,6 +294,7 @@ int main(int argc, char **argv) {
 
                for(int k = 0; k < NUM_PLAYERS; k++) {
                     ultimeStatistiche[k] = messRicevuto.statistics[k];
+                    players[k] = messRicevuto.players[k];
                 }
             }
     
