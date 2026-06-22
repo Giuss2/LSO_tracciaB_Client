@@ -2,6 +2,8 @@
 #define N 30
 #define MURO 'X'
 #define NUM_PLAYERS 12
+#define PORT 5201
+#define UDP_PORT 5201
 
 typedef enum {
     RESET_COLOR,
@@ -86,9 +88,15 @@ typedef struct messRicevuto{
        Player players[NUM_PLAYERS];
        MsgType type;
        Statistiche statistics[NUM_PLAYERS];
-       int secondi_rimanenti;
 
 }MessRicevuto;
+
+
+typedef struct messBroadcast{
+    Player p;
+    Player players[NUM_PLAYERS];
+    MsgType type;
+} MessBroadcast;
 
 
 Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char mappa[N][N]);

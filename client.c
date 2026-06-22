@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <stdbool.h>
 #include <ctype.h>
-#include "mappa.h"
+#include "game.h"
 
 #define MAXLINE 4096
 Player players[NUM_PLAYERS];
@@ -63,7 +63,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    
+
+
     // ---- resolve & connect ----
     struct addrinfo hints, *res, *rp;
     memset(&hints, 0, sizeof hints);
@@ -142,13 +143,6 @@ int main(int argc, char **argv) {
                 close(sockfd); 
                 exit(1); 
             }
-
-            if (messRicevuto.type == MSG_GAME_OVER) {
-                system("clear");
-                printf("PARTITA TERMINATA MENTRE TI AUTENTICAVI! Vincitore: %s\n", messRicevuto.p.username); 
-                close(sockfd);
-                return 0; 
-            }
             
         }while(messRicevuto.type == MSG_GLOBAL_UPDATE);
 
@@ -164,6 +158,29 @@ int main(int argc, char **argv) {
                 printf("\n[ERRORE] Login fallito: credenziali errate. Riprova.\n\n");
             }
         }
+    }
+
+    
+    // Socket UDP
+    struct sockaddr_in addr;
+    char buffer[1024];
+    int sock_broadcast = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock_broadcast < 0) {
+        perror("socket");
+        exit(1);
+    }
+
+    int yes = 1;
+    setsockopt(sock_broadcast, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+    // Bind su tutte le interfacce
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(UDP_PORT);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if (bind(sock_broadcast, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        perror("bind UDP");
+        exit(1);
     }
 
     Statistiche ultimeStatistiche[NUM_PLAYERS]; 
@@ -190,7 +207,14 @@ int main(int argc, char **argv) {
         FD_ZERO(&rset);
         if (stdin_open) FD_SET(STDIN_FILENO, &rset);
         FD_SET(sockfd, &rset);
-        int maxfd = (STDIN_FILENO > sockfd ? STDIN_FILENO : sockfd) + 1;
+        FD_SET(sock_broadcast, &rset);
+
+       int maxfd = (STDIN_FILENO > sockfd) ? STDIN_FILENO : sockfd;
+
+        if (sock_broadcast > maxfd) {
+            maxfd = sock_broadcast;
+        }
+        maxfd += 1;
 
 
         int nready = select(maxfd, &rset, NULL, NULL, NULL);
@@ -238,20 +262,12 @@ int main(int argc, char **argv) {
         //leggi le risposte ricevute dal server
         if (FD_ISSET(sockfd, &rset)) {
             MessRicevuto messRicevuto;
+            memset(&messRicevuto, 0, sizeof(messRicevuto));
             ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
 
             if (n <= 0) { perror("Connessione persa o chiusa dal server "); break; }
 
 
-            if (messRicevuto.type == MSG_GAME_OVER) { 
-                system("clear"); 
-                if (messRicevuto.p.username[0] == '\0' || strcmp(messRicevuto.p.username, "") == 0) {
-                    printf("PARTITA TERMINATA: Nessuno collegato\n"); 
-                } else {
-                    printf("VINCITORE: %s\n", messRicevuto.p.username); 
-                }
-                break; 
-            }
 
             memset(players, 0, sizeof(players));
             for(int k = 0; k < NUM_PLAYERS; k++)
@@ -270,6 +286,32 @@ int main(int argc, char **argv) {
             }
     
             stampaMappa(mappaLocale, mappaGlobale, globalUpdate, ultimeStatistiche);
+        }
+
+        // ascolta messaggi broadcast dal server
+        if (FD_ISSET(sock_broadcast, &rset)) {
+            MessBroadcast messRicevuto;
+            memset(&messRicevuto, 0, sizeof(messRicevuto));
+            ssize_t n = recv(sock_broadcast, &messRicevuto, sizeof(messRicevuto), 0);
+
+            if (n <= 0) { perror("Connessione persa o chiusa dal server "); break; }
+
+
+            memset(players, 0, sizeof(players));
+            for(int k = 0; k < NUM_PLAYERS; k++)
+                players[k] = messRicevuto.players[k];
+        
+            if (messRicevuto.type == MSG_GAME_OVER) { 
+                system("clear"); 
+                if (messRicevuto.p.username[0] == '\0' || strcmp(messRicevuto.p.username, "") == 0) {
+                    printf("PARTITA TERMINATA: Nessuno collegato\n"); 
+                } else {
+                    printf("VINCITORE: %s\n", messRicevuto.p.username); 
+                }
+                break; 
+            }
+        
+            
         }
     
     }
