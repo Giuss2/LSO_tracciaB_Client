@@ -1,5 +1,5 @@
 
-#define N 20
+#define N 30
 #define MURO 'X'
 #define NUM_PLAYERS 12
 
@@ -72,6 +72,24 @@ typedef struct statistiche {
     char username[32];
     int celleConquistate;
 } Statistiche;
+
+typedef struct messClient{
+	char direzione;
+	bool movimento;
+    char username[32];
+    char password[32];
+    MsgType type;
+}MessClient;
+typedef struct messRicevuto{
+       Mappa mappaPlayer;
+       Player p;
+       Player players[NUM_PLAYERS];
+       MsgType type;
+       Statistiche statistics[NUM_PLAYERS];
+       int secondi_rimanenti;
+
+}MessRicevuto;
+
 
 Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char mappa[N][N]);
 

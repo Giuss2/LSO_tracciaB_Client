@@ -16,24 +16,6 @@
 Player players[NUM_PLAYERS];
 
 
-typedef struct messClient{
-	char direzione;
-	bool movimento;
-    char username[32];
-    char password[32];
-    MsgType type;
-}MessClient;
-typedef struct messRicevuto{
-       Mappa mappaPlayer;
-       Player p;
-       Player players[NUM_PLAYERS];
-       MsgType type;
-       Statistiche statistics[NUM_PLAYERS];
-
-}MessRicevuto;
-
-
-
 static ssize_t writen_all(int fd, MessClient *mess) {
 
     size_t off = 0;
@@ -101,6 +83,8 @@ int main(int argc, char **argv) {
     }
     freeaddrinfo(res);
     if (sockfd < 0) { perror("connect"); return 1; }
+
+    //--- REGISTRAZIONE E/O AUTENTICAZIONE --- 
 
     printf("Benvenuto nel gioco! \n");  fflush(stdout);
     MessClient messIniziale;
@@ -200,6 +184,7 @@ int main(int argc, char **argv) {
     memset(ultimeStatistiche, 0, sizeof(ultimeStatistiche));
     memset(players, 0, sizeof(players));
 
+
     while(running) {
 
         FD_ZERO(&rset);
@@ -207,12 +192,14 @@ int main(int argc, char **argv) {
         FD_SET(sockfd, &rset);
         int maxfd = (STDIN_FILENO > sockfd ? STDIN_FILENO : sockfd) + 1;
 
+
         int nready = select(maxfd, &rset, NULL, NULL, NULL);
         if (nready < 0) {
             if (errno == EINTR) continue;
             perror("select");
             break;
         }
+
 
         // stdin pronto: leggi e invia al server
         if (stdin_open && FD_ISSET(STDIN_FILENO, &rset)) {
@@ -248,18 +235,14 @@ int main(int argc, char **argv) {
         }
 
         
-
+        //leggi le risposte ricevute dal server
         if (FD_ISSET(sockfd, &rset)) {
             MessRicevuto messRicevuto;
             ssize_t n = readn_all(sockfd, &messRicevuto, sizeof(messRicevuto));
 
             if (n <= 0) { perror("Connessione persa o chiusa dal server "); break; }
-            if(messRicevuto.type == MSG_SUBSCRIBE && (strcmp(messRicevuto.p.username, "FAIL") == 0)){
-                printf("Registrazione fallita: username gia' in uso. ");
-            }
-            if(messRicevuto.type == MSG_LOGIN && (strcmp(messRicevuto.p.username, "FAIL") == 0)){
-                printf("Login fallito: credenziali errate oppure sei gia' loggato con questo account. ");
-            }
+
+
             if (messRicevuto.type == MSG_GAME_OVER) { 
                 system("clear"); 
                 if (messRicevuto.p.username[0] == '\0' || strcmp(messRicevuto.p.username, "") == 0) {
@@ -267,22 +250,19 @@ int main(int argc, char **argv) {
                 } else {
                     printf("VINCITORE: %s\n", messRicevuto.p.username); 
                 }
-                break;
-                
+                break; 
             }
 
             memset(players, 0, sizeof(players));
-            for(int k = 0; k < NUM_PLAYERS; k++) {
+            for(int k = 0; k < NUM_PLAYERS; k++)
                 players[k] = messRicevuto.players[k];
-            }
 
-            if(messRicevuto.type == MSG_UPDATE) {
+            if(messRicevuto.type == MSG_UPDATE)
                 mappaLocale = messRicevuto.mappaPlayer;
-            }
     
             if(messRicevuto.type == MSG_GLOBAL_UPDATE) {
                 mappaGlobale = messRicevuto.mappaPlayer;
-                globalUpdate = true; // Diventa true SOLO se è un update globale
+                globalUpdate = true; 
 
                for(int k = 0; k < NUM_PLAYERS; k++) {
                     ultimeStatistiche[k] = messRicevuto.statistics[k];
@@ -292,7 +272,7 @@ int main(int argc, char **argv) {
             stampaMappa(mappaLocale, mappaGlobale, globalUpdate, ultimeStatistiche);
         }
     
-}
+    }
     close(sockfd);
     return 0;
 }
@@ -327,7 +307,6 @@ void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Stati
         for(int i = 0; i < N; i++) {
             for(int j = 0; j < N; j++) {
                 Colore colore = getColoreCasella(i, j, mappaGlobale.mappaPlayer, mappaGlobale.mappa);
-               
                 printf("%s %-2c%s", colori[colore], mappaGlobale.mappa[i][j], colori[RESET_COLOR]);
             }
             printf("\n");
@@ -342,14 +321,14 @@ void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Stati
    }
     
    printf("\n");
+
     for(int i = 0; i < N; i++) {
         for(int j = 0; j < N; j++) {
             Colore colore = getColoreCasella(i, j, mappaLocale.mappaPlayer, mappaLocale.mappa);
-            
             printf("%s %-2c%s", colori[colore], mappaLocale.mappa[i][j], colori[RESET_COLOR]);
         }
         printf("\n");
     }
-        
+    
     fflush(stdout);
 }
