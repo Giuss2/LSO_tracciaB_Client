@@ -305,7 +305,7 @@ int main(int argc, char **argv) {
 
             if (n <= 0) { perror("Connessione persa o chiusa dal server "); break; }
 
-            //evita che il client stesse processando ancora gli altri dati su socket tcp
+
             if (messRicevuto.type == MSG_GAME_OVER) {
                 system("clear");
                 printf("\n=========================================\n");
@@ -368,7 +368,6 @@ Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char mappa[N][N]) 
 
 void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Statistiche statistics[NUM_PLAYERS]) {
 
-    //printf("\033[2J\033[H");
     system("clear");
     
     if(globalUpdate) {

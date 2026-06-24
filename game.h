@@ -101,8 +101,4 @@ typedef struct messBroadcast{
 
 Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char mappa[N][N]);
 
-void rivelaNebbia(Player *p, char mappa[N][N], char mappaGlobale[N][N]);
-
-bool verificaMossa(int riga, int colonna, char mappa[N][N]);
-
 void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Statistiche statistics[NUM_PLAYERS]);
