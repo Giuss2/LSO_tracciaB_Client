@@ -225,6 +225,36 @@ int main(int argc, char **argv) {
             break;
         }
 
+         // ascolta messaggi broadcast dal server
+        if (FD_ISSET(sock_broadcast, &rset)) {
+            MessBroadcast messRicevuto;
+            memset(&messRicevuto, 0, sizeof(messRicevuto));
+            ssize_t n = recv(sock_broadcast, &messRicevuto, sizeof(messRicevuto), 0);
+
+            if (n <= 0) { perror("Connessione persa o chiusa dal server "); break; }
+
+
+            memset(players, 0, sizeof(players));
+            for(int k = 0; k < NUM_PLAYERS; k++)
+                players[k] = messRicevuto.players[k];
+        
+            if (messRicevuto.type == MSG_GAME_OVER) { 
+                system("clear"); 
+                if (messRicevuto.p.username[0] == '\0' || strcmp(messRicevuto.p.username, "") == 0) {
+                    printf("PARTITA TERMINATA: Nessuno collegato\n"); 
+                } else {
+                    system("clear");
+                    printf("\n=========================================\n");
+                    printf("           PARTITA TERMINATA             \n");
+                    printf("=========================================\n");
+                    printf(" Il vincitore è: %s\n", messRicevuto.p.username);
+                    printf("=========================================\n\n");
+                }
+                break; 
+            }
+        
+            
+        }
 
         // stdin pronto: leggi e invia al server
         if (stdin_open && FD_ISSET(STDIN_FILENO, &rset)) {
@@ -309,31 +339,7 @@ int main(int argc, char **argv) {
             stampaMappa(mappaLocale, mappaGlobale, globalUpdate, ultimeStatistiche);
         }
 
-        // ascolta messaggi broadcast dal server
-        if (FD_ISSET(sock_broadcast, &rset)) {
-            MessBroadcast messRicevuto;
-            memset(&messRicevuto, 0, sizeof(messRicevuto));
-            ssize_t n = recv(sock_broadcast, &messRicevuto, sizeof(messRicevuto), 0);
-
-            if (n <= 0) { perror("Connessione persa o chiusa dal server "); break; }
-
-
-            memset(players, 0, sizeof(players));
-            for(int k = 0; k < NUM_PLAYERS; k++)
-                players[k] = messRicevuto.players[k];
-        
-            if (messRicevuto.type == MSG_GAME_OVER) { 
-                system("clear"); 
-                if (messRicevuto.p.username[0] == '\0' || strcmp(messRicevuto.p.username, "") == 0) {
-                    printf("PARTITA TERMINATA: Nessuno collegato\n"); 
-                } else {
-                    printf("VINCITORE: %s\n", messRicevuto.p.username); 
-                }
-                break; 
-            }
-        
-            
-        }
+       
     
     }
     close(sockfd);
