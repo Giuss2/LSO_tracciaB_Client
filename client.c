@@ -115,7 +115,6 @@ int main(int argc, char **argv) {
         else
             messIniziale.type = MSG_LOGIN;
        
-        messIniziale.movimento = false; 
         
         printf("Inserisci username: ");
         fgets(messIniziale.username, sizeof(messIniziale.username), stdin);
@@ -269,20 +268,21 @@ int main(int argc, char **argv) {
                 if (carattere[0] == '\n' || carattere[0] == '\0') {
                     continue; 
                 }
+                
 
                 carattere[0] = toupper((unsigned char)carattere[0]);
 
                 if(carattere[0] == 'U') uscita_volontaria = true;
 
                 if (carattere[0] != 'W' && carattere[0] != 'A' && carattere[0] != 'S' && carattere[0] != 'D' && carattere[0] != 'U') {
-                    printf("Carattere non valido! Inserire A, D, W o S. Premere U se si desidera Uscire dal gioco.");
+                    printf("Carattere non valido! Inserire A, D, W o S. Premere U se si desidera Uscire dal gioco. \n");
                     continue;
                 }
 
                 MessClient mess;
                 memset(&mess, 0, sizeof(mess));
                 mess.direzione = carattere[0];
-                mess.movimento = true; 
+                mess.type = MSG_MOVE;
 
                 if (writen_all(sockfd, &mess) < 0) {
                     perror("send");

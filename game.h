@@ -50,7 +50,8 @@ typedef enum {
     MSG_GAME_OVER = 1,
     MSG_GLOBAL_UPDATE = 2,
     MSG_SUBSCRIBE = 3,
-    MSG_LOGIN = 4
+    MSG_LOGIN = 4,
+    MSG_MOVE = 5
 } MsgType;
 
 typedef struct player {
@@ -77,7 +78,6 @@ typedef struct statistiche {
 
 typedef struct messClient{
 	char direzione;
-	bool movimento;
     char username[32];
     char password[32];
     MsgType type;
