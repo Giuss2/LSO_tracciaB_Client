@@ -76,12 +76,12 @@ typedef struct statistiche {
     int celleConquistate;
 } Statistiche;
 
-typedef struct messClient{
+typedef struct messDaInviare{
 	char direzione;
     char username[32];
     char password[32];
     MsgType type;
-}MessClient;
+}MessDaInviare;
 typedef struct messRicevuto{
        Mappa mappaPlayer;
        Player p;

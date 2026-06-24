@@ -16,13 +16,13 @@
 Player players[NUM_PLAYERS];
 
 
-static ssize_t writen_all(int fd, MessClient *mess) {
+static ssize_t writen_all(int fd, MessDaInviare *mess) {
 
     size_t off = 0;
 
-    while (off < sizeof(MessClient)) {
+    while (off < sizeof(MessDaInviare)) {
 
-        ssize_t w = send(fd, ((char*)mess) + off, sizeof(MessClient) - off, 0);
+        ssize_t w = send(fd, ((char*)mess) + off, sizeof(MessDaInviare) - off, 0);
 
         if (w < 0) {
             if (errno == EINTR) continue;
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
     //--- REGISTRAZIONE E/O AUTENTICAZIONE --- 
 
     printf("Benvenuto nel gioco! \n");  fflush(stdout);
-    MessClient messIniziale;
+    MessDaInviare messIniziale;
     MessRicevuto messRicevuto;
     bool autenticato = false;
     int running = 0;
@@ -279,7 +279,7 @@ int main(int argc, char **argv) {
                     continue;
                 }
 
-                MessClient mess;
+                MessDaInviare mess;
                 memset(&mess, 0, sizeof(mess));
                 mess.direzione = carattere[0];
                 mess.type = MSG_MOVE;
