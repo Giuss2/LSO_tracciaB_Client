@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
         char scelta[32];
 
         do {
-            printf("Premi R per registrarti oppure L per fare il login: ");
+            printf("Premi R per registrarti oppure L per fare il login: \n");
             fflush(stdout);
 
             if (fgets(scelta, sizeof(scelta), stdin) == NULL) {
