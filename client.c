@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
         if (FD_ISSET(sock_broadcast, &rset)) {
             MessBroadcast messRicevuto;
             memset(&messRicevuto, 0, sizeof(messRicevuto));
-            ssize_t n = recv(sock_broadcast, &messRicevuto, sizeof(messRicevuto), 0);
+            ssize_t n = recvfrom(sock_broadcast, &messRicevuto, sizeof(messRicevuto), 0, NULL, NULL);
 
             if (n <= 0) { perror("Connessione persa o chiusa dal server "); break; }
 
