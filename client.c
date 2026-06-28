@@ -319,7 +319,7 @@ int main(int argc, char **argv) {
             }
 
             if(messRicevuto.type == MSG_UPDATE){
-                mappaLocale = messRicevuto.mappaPlayer;
+                mappaLocale = messRicevuto.mappa;
                 
                 for(int k = 0; k < NUM_PLAYERS; k++) {
                     players[k] = messRicevuto.players[k];
@@ -327,7 +327,7 @@ int main(int argc, char **argv) {
             }
     
             if(messRicevuto.type == MSG_GLOBAL_UPDATE) {
-                mappaGlobale = messRicevuto.mappaPlayer;
+                mappaGlobale = messRicevuto.mappa;
                 globalUpdate = true; 
 
                for(int k = 0; k < NUM_PLAYERS; k++) {
@@ -374,8 +374,8 @@ void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Stati
         
         for(int i = 0; i < N; i++) {
             for(int j = 0; j < N; j++) {
-                Colore colore = getColoreCasella(i, j, mappaGlobale.mappaPlayer, mappaGlobale.mappa);
-                printf("%s %-2c%s", colori[colore], mappaGlobale.mappa[i][j], colori[RESET_COLOR]);
+                Colore colore = getColoreCasella(i, j, mappaGlobale.territorioGiocatori, mappaGlobale.planciaDiGioco);
+                printf("%s %-2c%s", colori[colore], mappaGlobale.planciaDiGioco[i][j], colori[RESET_COLOR]);
             }
             printf("\n");
         }
@@ -392,8 +392,8 @@ void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Stati
 
     for(int i = 0; i < N; i++) {
         for(int j = 0; j < N; j++) {
-            Colore colore = getColoreCasella(i, j, mappaLocale.mappaPlayer, mappaLocale.mappa);
-            printf("%s %-2c%s", colori[colore], mappaLocale.mappa[i][j], colori[RESET_COLOR]);
+            Colore colore = getColoreCasella(i, j, mappaLocale.territorioGiocatori, mappaLocale.planciaDiGioco);
+            printf("%s %-2c%s", colori[colore], mappaLocale.planciaDiGioco[i][j], colori[RESET_COLOR]);
         }
         printf("\n");
     }

@@ -65,8 +65,8 @@ typedef struct player {
 } Player;
 
 typedef struct mappa {
-    char mappa[N][N];
-    char mappaPlayer[N][N];
+    char planciaDiGioco[N][N];
+    char territorioGiocatori[N][N];
 } Mappa;
 
 
@@ -83,7 +83,7 @@ typedef struct messDaInviare{
     MsgType type;
 }MessDaInviare;
 typedef struct messRicevuto{
-       Mappa mappaPlayer;
+       Mappa mappa;
        Player p;
        Player players[NUM_PLAYERS];
        MsgType type;
@@ -99,6 +99,6 @@ typedef struct messBroadcast{
 } MessBroadcast;
 
 
-Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char mappa[N][N]);
+Colore getColoreCasella(int i, int j, char mappaPlayer[N][N], char planciaDiGioco[N][N]);
 
 void stampaMappa(Mappa mappaLocale, Mappa mappaGlobale, bool globalUpdate, Statistiche statistics[NUM_PLAYERS]);
