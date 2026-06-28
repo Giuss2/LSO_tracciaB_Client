@@ -7,4 +7,4 @@ COPY . .
 
 RUN gcc client.c -o client
 
-CMD ["./client", "host.docker.internal", "5201"]
+CMD ["./client"]
